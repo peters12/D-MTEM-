@@ -1,0 +1,124 @@
+CODEBOOK: DMTEM_Dataset.csv
+
+Companion to the manuscript "Bounding single-channel influence in multidimensional
+trust aggregation for blockchain-based reputation systems: stability-ordered
+position weighting, analytical bounds, and evaluation under collusion attacks"
+(PeerJ Computer Science).
+
+
+1. FILE DESCRIPTION
+
+DMTEM_Dataset.csv is the labelled evaluation set used for the Bitcoin OTC
+benchmark. It is a harmonized file of 10,000 timestamped interactions among
+1,000 nodes, on the rating scale of the Stanford SNAP Bitcoin OTC web-of-trust
+network (5,881 nodes, 35,592 ratings; Kumar et al., 2016,
+https://snap.stanford.edu/data/soc-sign-bitcoinotc.html).
+
+  Format        comma-separated values, one header row, 10,000 data rows
+  Columns       9
+  Missing data  none
+  Row order     ascending by Timestamp_ms
+  Node IDs      the 1,000 nodes are labelled NODE_0001 to NODE_1000; 990 of them
+                appear as a source and 980 as a target. 801 nodes take part in
+                more than five interactions. No interaction has the same node as
+                source and target.
+
+The column names below are used exactly as they appear in the file. Values are
+stored as readable text labels where a column is categorical, so no separate
+decoding step is needed.
+
+
+2. FIELD DEFINITIONS
+
+1. Timestamp_ms
+   Type: decimal number (milliseconds)
+   Time stamp of the interaction. Range 112.23 to 199,972.86.
+
+2. Source_Node_ID
+   Type: text, format NODE_nnnn
+   Node that provided the rating.
+
+3. Target_Node_ID
+   Type: text, format NODE_nnnn
+   Node that received the rating.
+
+4. Observed_Latency_ms
+   Type: decimal number (milliseconds)
+   Latency observed for the interaction. Range 2.65 to 77.54; mean 18.22,
+   median 16.55.
+
+5. Transaction_Success
+   Type: integer
+   0 = the transaction failed       (2,206 rows)
+   1 = the transaction succeeded    (7,794 rows)
+
+6. Feedback_Rating_OTC
+   Type: integer
+   Raw rating R in [-10, +10], on the Bitcoin OTC scale. Values present in the
+   file: -10 to +1 and +4 to +10 (no interaction carries a rating of +2 or +3).
+   The manuscript normalizes the rating to [0, 1] as
+
+       T_norm = (R + 10) / 20
+
+   so R = -10 maps to 0.00, the neutral rating R = 0 maps to 0.50 and R = +10
+   maps to 1.00. The normalized value is not stored in the file.
+
+7. Malicious_Actor_GroundTruth
+   Type: integer, binary class label
+   0 = non-malicious    (7,035 rows; 70.35%)
+   1 = malicious        (2,965 rows; 29.65%)
+
+8. Detected_Attack_Pattern
+   Type: text, four values
+
+   Value               Rows   Rating range   Meaning
+   Bad-Mouthing        1,814  -10 to -5      dishonest negative rating, T_norm <= 0.25
+   Ballot-Stuffing     1,151  +7 to +10      dishonest positive rating, T_norm >= 0.85
+   None (Legitimate)   6,754  +4 to +10      no attack pattern, T_norm >= 0.70, successful transaction
+   None (Failed Tx)      281  -5 to +1       no attack pattern, T_norm between 0.25 and 0.55,
+                                            failed transaction (ambiguous rating, resolved by outcome)
+
+9. MTEM_Dynamic_Trust_Weight
+   Type: decimal number in [0, 1]
+   D-MTEM trust weight recorded for the interaction. Range 0.0803 to 0.9600.
+   Malicious rows lie between 0.0803 and 0.3199 (mean 0.2016); non-malicious rows
+   lie between 0.6800 and 0.9600 (mean 0.8206). The labelling rules in Section 3
+   do not use this column.
+
+
+3. LABELLING RULES
+
+Ground-truth labels were assigned per interaction (manuscript, Materials &
+Methods).
+
+- Malicious (1): the interaction carries a bad-mouthing or ballot-stuffing
+  pattern. Bad-mouthing ratings are -5 or lower and ballot-stuffing ratings are
+  +7 or higher, so the rating level alone does not separate the classes.
+- Non-malicious (0), honest: no attack pattern, rating of +4 or higher and a
+  successful transaction.
+- Non-malicious (0), ambiguous: 281 interactions with no attack pattern and a
+  rating between -5 and +1. All 281 transactions had failed. A failed
+  transaction can reflect a network fault or a timeout and is not by itself
+  evidence of malice, so these interactions were labelled non-malicious.
+
+Combinations of the label columns found in the file:
+
+   Detected_Attack_Pattern   Transaction_Success   Ground truth   Rows
+   Bad-Mouthing                      0                  1          1,201
+   Bad-Mouthing                      1                  1            613
+   Ballot-Stuffing                   0                  1            724
+   Ballot-Stuffing                   1                  1            427
+   None (Legitimate)                 1                  0          6,754
+   None (Failed Tx)                  0                  0            281
+
+
+4. CAUTIONS FOR REUSE
+
+- The labels are derived from the same rating stream that the models read. Results
+  on this file measure agreement with rating-derived labels, not independently
+  verified honesty (see the limitations in the Discussion section of the
+  manuscript).
+- Failed transactions occur in both classes (2,206 in total, of which 1,925 are
+  labelled malicious). Transaction_Success is therefore not a class indicator.
+- The synthetic benchmark (10,000 nodes, 200 time steps, 240 runs) is generated by
+  the simulation code and is separate from this file.
